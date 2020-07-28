@@ -15,29 +15,29 @@ struct File {
 }
 
 fn main() {
-    let files = parse_status();
-
-    match files {
-        Ok(f) => run_interface(f).unwrap(),
-        Err(e) => {
-            println!("Error: {}", e);
-            println!("No files have been changed.");
-        }
+    match Repository::discover("./") {
+        Ok(repo) => run(repo),
+        Err(_) => println!("This is not a git repository.")
     };
 }
 
-fn parse_status() -> Result<Vec<File>, String> {
-    let repo = match Repository::discover("./") {
-        Ok(statuses) => statuses,
-        Err(_) => return Err(String::from("This is not a git directory.")),
+fn run(repo: Repository) {
+    match parse_status(&repo) {
+        Ok(f) => run_interface(f, repo).unwrap(),
+        Err(e) => {
+            println!("Error: {}", e);
+            println!("No files have been changed.");
+        },
     };
+}
 
+fn parse_status(repo: &Repository) -> Result<Vec<File>, String> {
     let mut options = StatusOptions::new();
     options.include_ignored(false).include_untracked(true);
 
     let statuses = match repo.statuses(Some(&mut options)) {
         Ok(statuses) => statuses,
-        Err(e) => return Err(format!("Could not get status: {}", e)),
+        Err(e) => return Err(format!("Unable to get status: {}", e)),
     };
 
     if statuses.is_empty() {
@@ -91,7 +91,7 @@ fn print_status(files: &[File], selected: usize) {
     }
 }
 
-fn run_interface(mut files: Vec<File>) -> Result<(), io::Error> {
+fn run_interface(mut files: Vec<File>, repo: Repository) -> Result<(), io::Error> {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode()?;
 
@@ -117,7 +117,7 @@ fn run_interface(mut files: Vec<File>) -> Result<(), io::Error> {
             }
             Key::Char(' ') => files[selected].to_add ^= true,
             Key::Char('\n') => {
-                commit_changes(files);
+                commit_changes(files, repo);
                 break;
             }
             _ => (),
@@ -140,7 +140,7 @@ fn run_interface(mut files: Vec<File>) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn commit_changes(files: Vec<File>) {
+fn commit_changes(files: Vec<File>, repo: Repository) {
     let mut add = Command::new("git");
     add.arg("add");
 
