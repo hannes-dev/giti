@@ -29,24 +29,26 @@ fn parse_status() -> Vec<File> {
         .output()
         .expect("failed to run git status");
 
-    let mut files = Vec::new();
+    let output: &str = std::str::from_utf8(&result.stdout).expect("Invalid UTF in git output");
+
+    // Empty output, no changes
+    if output.trim_start().is_empty() {
+        return vec![];
+    }
 
     // split command output on newlines
-    let output: &str = std::str::from_utf8(&result.stdout).expect("Invalid UTF in git output");
+    let mut files = Vec::new();
     for item in output.split('\n') {
-        // if it's not just an empty line
-        if item.len() >= 2 {
-            let (status, path) = item.split_at(3);
-            let added = !status.starts_with(' ')
-                && !status.starts_with('?')
-                && status.chars().nth(1).unwrap() != 'M';
+        let (status, path) = item.split_at(3);
+        let added = !status.starts_with(' ')
+            && !status.starts_with('?')
+            && status.chars().nth(1).unwrap() != 'M';
 
-            files.push(File {
-                path: path.to_owned(),
-                added,
-                to_add: added,
-            });
-        }
+        files.push(File {
+            path: path.to_owned(),
+            added,
+            to_add: added,
+        });
     }
 
     files
