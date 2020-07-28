@@ -17,7 +17,7 @@ struct File {
 fn main() {
     match Repository::discover("./") {
         Ok(repo) => run(repo),
-        Err(_) => println!("This is not a git repository.")
+        Err(_) => println!("This is not a git repository."),
     };
 }
 
@@ -27,7 +27,7 @@ fn run(repo: Repository) {
         Err(e) => {
             println!("Error: {}", e);
             println!("No files have been changed.");
-        },
+        }
     };
 }
 
