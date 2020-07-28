@@ -15,7 +15,7 @@ struct File {
 
 fn main() {
     let files = parse_status();
-    if files.len() == 0 {
+    if files.is_empty() {
         println!("No files have been changed.")
     } else {
         run_interface(files);
