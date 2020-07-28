@@ -1,11 +1,11 @@
+use std::io::{stdin, stdout, Write};
+use std::process::Command;
+use std::str;
+use termion::color;
+use termion::cursor::DetectCursorPos;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use termion::color;
-use termion::cursor::DetectCursorPos;
-use std::io::{Write, stdout, stdin};
-use std::process::Command;
-use std::str;
 
 struct File {
     path: String,
@@ -24,13 +24,13 @@ fn main() {
 
 fn parse_status() -> Vec<File> {
     let result = Command::new("git")
-            .arg("status")
-            .arg("--porcelain")
-            .output()
-            .expect("failed to run git status");
+        .arg("status")
+        .arg("--porcelain")
+        .output()
+        .expect("failed to run git status");
 
     let mut files = Vec::new();
-    
+
     // split command output on newlines
     for item in result.stdout.split(|num| num == &10) {
         // if it's not just an empty line
@@ -55,16 +55,24 @@ fn print_status(files: &Vec<File>, selected: usize) {
         } else {
             (" ", format!("{}", color::Fg(color::Red)))
         };
-        
+
         // set select marks around the currently selected file
         let select_marks = if index == selected {
             [">", "<"]
         } else {
             [" ", " "]
         };
-        
+
         // print line with file info. example of a selected and added file: ">[x] .gitignore<"
-        println!("{}{}[{}] {}{}{}\r", select_marks[0], color, check, file.path, color::Fg(color::Reset), select_marks[1]);
+        println!(
+            "{}{}[{}] {}{}{}\r",
+            select_marks[0],
+            color,
+            check,
+            file.path,
+            color::Fg(color::Reset),
+            select_marks[1]
+        );
     }
 }
 
@@ -74,26 +82,46 @@ fn run_interface(mut files: Vec<File>) {
 
     let mut selected = 0;
 
-    println!("{}\r", "Use arrow keys to select, space to toggle and enter to confirm. Esc or q to quit.");
+    println!(
+        "{}\r",
+        "Use arrow keys to select, space to toggle and enter to confirm. Esc or q to quit."
+    );
     print_status(&files, selected);
 
     // listen for key-presses
     for c in stdin.keys() {
         match c.unwrap() {
             Key::Char('q') => break,
-            Key::Esc       => break,
-            Key::Up        => if selected > 0 {selected -= 1},
-            Key::Down      => if selected < files.len() - 1 {selected += 1},
+            Key::Esc => break,
+            Key::Up => {
+                if selected > 0 {
+                    selected -= 1
+                }
+            }
+            Key::Down => {
+                if selected < files.len() - 1 {
+                    selected += 1
+                }
+            }
             Key::Char(' ') => files[selected].to_add ^= true,
-            Key::Char('\n') => {commit_changes(files); break},
-            _              => (),
+            Key::Char('\n') => {
+                commit_changes(files);
+                break;
+            }
+            _ => (),
         }
 
         // get current cursor position
         let position = stdout.cursor_pos().unwrap().1;
         // clear lines equal to the amount of files, starting from 1 above the cursor.
         for number in 1..files.len() + 1 {
-            write!(stdout, "{}{}", termion::cursor::Goto(1, position - number as u16), termion::clear::CurrentLine).expect("");
+            write!(
+                stdout,
+                "{}{}",
+                termion::cursor::Goto(1, position - number as u16),
+                termion::clear::CurrentLine
+            )
+            .expect("");
         }
         print_status(&files, selected);
         stdout.flush().unwrap();
@@ -105,8 +133,7 @@ fn commit_changes(files: Vec<File>) {
     add.arg("add");
 
     let mut remove = Command::new("git");
-    remove.arg("restore")
-          .arg("--staged");
+    remove.arg("restore").arg("--staged");
 
     let mut add_amount = 0;
     let mut remove_amount = 0;
@@ -125,14 +152,15 @@ fn commit_changes(files: Vec<File>) {
     }
 
     if add_amount > 0 {
-        add.output()
-           .expect("Failed to add files");
+        add.output().expect("Failed to add files");
     }
 
     if remove_amount > 0 {
-        remove.output()
-              .expect("Failed to add files");
+        remove.output().expect("Failed to add files");
     }
 
-    println!("You staged {} and unstaged {} file(s).\r", add_amount, remove_amount);
+    println!(
+        "You staged {} and unstaged {} file(s).\r",
+        add_amount, remove_amount
+    );
 }
