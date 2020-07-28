@@ -34,7 +34,7 @@ fn parse_status() -> Vec<File> {
 
     if !error.is_empty() {
         println!("Git gave this error: {}", error);
-        
+
         return vec![];
     }
 
