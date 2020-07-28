@@ -38,7 +38,7 @@ fn parse_status() -> Vec<File> {
 
     // split command output on newlines
     let mut files = Vec::new();
-    for item in output.split('\n') {
+    for item in output.lines() {
         let (status, path) = item.split_at(3);
         let added = !status.starts_with(' ')
             && !status.starts_with('?')
