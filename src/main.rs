@@ -36,22 +36,21 @@ fn parse_status() -> Vec<File> {
         return vec![];
     }
 
-    // split command output on newlines
-    let mut files = Vec::new();
-    for item in output.lines() {
-        let (status, path) = item.split_at(3);
-        let added = !status.starts_with(' ')
-            && !status.starts_with('?')
-            && status.chars().nth(1).unwrap() != 'M';
+    output
+        .lines()
+        .map(|line| {
+            let (status, path) = line.split_at(3);
+            let added = !status.starts_with(' ')
+                && !status.starts_with('?')
+                && status.chars().nth(1).unwrap() != 'M';
 
-        files.push(File {
-            path: path.to_owned(),
-            added,
-            to_add: added,
-        });
-    }
-
-    files
+            File {
+                path: path.to_owned(),
+                added,
+                to_add: added,
+            }
+        })
+        .collect()
 }
 
 fn print_status(files: &[File], selected: usize) {
