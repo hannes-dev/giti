@@ -47,7 +47,7 @@ fn parse_status() -> Vec<File> {
     files
 }
 
-fn print_status(files: &Vec<File>, selected: usize) {
+fn print_status(files: &[File], selected: usize) {
     // loop over files, adding x and making them green if they are (going to be) staged
     for (index, file) in files.iter().enumerate() {
         let (check, color) = if file.to_add {
