@@ -29,7 +29,14 @@ fn parse_status() -> Vec<File> {
         .output()
         .expect("failed to run git status");
 
-    let output: &str = std::str::from_utf8(&result.stdout).expect("Invalid UTF in git output");
+    let output: &str = str::from_utf8(&result.stdout).expect("Invalid UTF in git output");
+    let error: &str = str::from_utf8(&result.stderr).expect("Invalid UTF in git error");
+
+    if !error.is_empty() {
+        println!("Git gave this error: {}", error);
+        
+        return vec![];
+    }
 
     // Empty output, no changes
     if output.trim_start().is_empty() {
