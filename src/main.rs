@@ -1,4 +1,4 @@
-use std::io::{stdin, stdout, Write};
+use std::io::{self, stdin, stdout, Write};
 use std::process::Command;
 use std::str;
 use termion::color;
@@ -18,7 +18,7 @@ fn main() {
     if files.is_empty() {
         println!("No files have been changed.")
     } else {
-        run_interface(files);
+        run_interface(files).unwrap();
     }
 }
 
@@ -76,9 +76,9 @@ fn print_status(files: &[File], selected: usize) {
     }
 }
 
-fn run_interface(mut files: Vec<File>) {
+fn run_interface(mut files: Vec<File>) -> Result<(), io::Error> {
     let stdin = stdin();
-    let mut stdout = stdout().into_raw_mode().unwrap();
+    let mut stdout = stdout().into_raw_mode()?;
 
     let mut selected = 0;
 
@@ -87,7 +87,7 @@ fn run_interface(mut files: Vec<File>) {
 
     // listen for key-presses
     for c in stdin.keys() {
-        match c.unwrap() {
+        match c? {
             Key::Char('q') => break,
             Key::Esc => break,
             Key::Up => {
@@ -109,7 +109,7 @@ fn run_interface(mut files: Vec<File>) {
         }
 
         // get current cursor position
-        let position = stdout.cursor_pos().unwrap().1;
+        let position = stdout.cursor_pos()?.1;
         // clear lines equal to the amount of files, starting from 1 above the cursor.
         for number in 1..files.len() + 1 {
             write!(
@@ -117,12 +117,12 @@ fn run_interface(mut files: Vec<File>) {
                 "{}{}",
                 termion::cursor::Goto(1, position - number as u16),
                 termion::clear::CurrentLine
-            )
-            .expect("Failed to clear line");
+            )?;
         }
         print_status(&files, selected);
-        stdout.flush().unwrap();
+        stdout.flush()?;
     }
+    Ok(())
 }
 
 fn commit_changes(files: Vec<File>) {
