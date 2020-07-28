@@ -6,6 +6,7 @@ use termion::cursor::DetectCursorPos;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use git2::Repository;
 
 struct File {
     path: String,
@@ -23,14 +24,12 @@ fn main() {
 }
 
 fn parse_status() -> Vec<File> {
-    let result = Command::new("git")
-        .arg("status")
-        .arg("--porcelain")
-        .output()
-        .expect("failed to run git status");
+    let repo = match Repository::discover("./") {
+        Ok(repo) => repo,
+        Err(e) => panic!("failed to open: {}", e),
+    };
 
-    let output: &str = str::from_utf8(&result.stdout).expect("Invalid UTF in git output");
-    let error: &str = str::from_utf8(&result.stderr).expect("Invalid UTF in git error");
+    println!("{:?}", repo.statuses(None).unwrap().get(0).unwrap().status());
 
     if !error.is_empty() {
         println!("Git gave this error: {}", error);
