@@ -1,12 +1,12 @@
+use git2::Repository;
+use git2::StatusOptions;
 use std::io::{self, stdin, stdout, Write};
 use std::process::Command;
-use std::str;
 use termion::color;
 use termion::cursor::DetectCursorPos;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use git2::Repository;
 
 struct File {
     path: String,
@@ -16,47 +16,50 @@ struct File {
 
 fn main() {
     let files = parse_status();
-    if files.is_empty() {
-        println!("No files have been changed.")
-    } else {
-        run_interface(files).unwrap();
-    }
+
+    match files {
+        Ok(f) => run_interface(f).unwrap(),
+        Err(e) => {
+            println!("Error: {}", e);
+            println!("No files have been changed.");
+        }
+    };
 }
 
-fn parse_status() -> Vec<File> {
+fn parse_status() -> Result<Vec<File>, String> {
     let repo = match Repository::discover("./") {
-        Ok(repo) => repo,
-        Err(e) => panic!("failed to open: {}", e),
+        Ok(statuses) => statuses,
+        Err(_) => return Err(String::from("This is not a git directory.")),
     };
 
-    println!("{:?}", repo.statuses(None).unwrap().get(0).unwrap().status());
+    let mut options = StatusOptions::new();
+    options.include_ignored(false).include_untracked(true);
 
-    if !error.is_empty() {
-        println!("Git gave this error: {}", error);
+    let statuses = match repo.statuses(Some(&mut options)) {
+        Ok(statuses) => statuses,
+        Err(e) => return Err(format!("Could not get status: {}", e)),
+    };
 
-        return vec![];
+    if statuses.is_empty() {
+        return Err(String::from("There are no unstaged files."));
     }
 
-    // Empty output, no changes
-    if output.trim_start().is_empty() {
-        return vec![];
-    }
-
-    output
-        .lines()
+    Ok(statuses
+        .iter()
         .map(|line| {
-            let (status, path) = line.split_at(3);
-            let added = !status.starts_with(' ')
-                && !status.starts_with('?')
-                && status.chars().nth(1).unwrap() != 'M';
+            let status = line.status();
+            let path = line.path().unwrap();
+            let added = status.is_index_modified() && !status.is_wt_modified();
+
+            println!("{:?}", status);
 
             File {
-                path: path.to_owned(),
+                path: path.to_string(),
                 added,
                 to_add: added,
             }
         })
-        .collect()
+        .collect())
 }
 
 fn print_status(files: &[File], selected: usize) {
@@ -104,12 +107,12 @@ fn run_interface(mut files: Vec<File>) -> Result<(), io::Error> {
             Key::Esc => break,
             Key::Up => {
                 if selected > 0 {
-                    selected -= 1
+                    selected -= 1;
                 }
             }
             Key::Down => {
                 if selected < files.len() - 1 {
-                    selected += 1
+                    selected += 1;
                 }
             }
             Key::Char(' ') => files[selected].to_add ^= true,
