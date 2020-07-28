@@ -15,7 +15,11 @@ struct File {
 
 fn main() {
     let files = parse_status();
-    run_interface(files);
+    if files.len() == 0 {
+        println!("No files have been changed.")
+    } else {
+        run_interface(files);
+    }
 }
 
 fn parse_status() -> Vec<File> {
