@@ -82,10 +82,7 @@ fn run_interface(mut files: Vec<File>) {
 
     let mut selected = 0;
 
-    println!(
-        "{}\r",
-        "Use arrow keys to select, space to toggle and enter to confirm. Esc or q to quit."
-    );
+    println!("Use arrow keys to select, space to toggle and enter to confirm. Esc or q to quit.\r");
     print_status(&files, selected);
 
     // listen for key-presses
