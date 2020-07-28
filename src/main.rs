@@ -118,7 +118,7 @@ fn run_interface(mut files: Vec<File>) {
                 termion::cursor::Goto(1, position - number as u16),
                 termion::clear::CurrentLine
             )
-            .expect("");
+            .expect("Failed to clear line");
         }
         print_status(&files, selected);
         stdout.flush().unwrap();
