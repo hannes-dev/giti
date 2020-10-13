@@ -50,9 +50,9 @@ fn parse_status(repo: &Repository) -> Result<Vec<File>, String> {
         .map(|line| {
             let status = line.status();
             let path = line.path().unwrap();
-            let added = status.is_index_modified() && !status.is_wt_modified();
+            let added = (status.is_index_modified() || status.is_index_new()) && !status.is_wt_modified();
 
-            println!("{:?}", status);
+            // println!("{:?}", status);
 
             File {
                 path: path.to_string(),
