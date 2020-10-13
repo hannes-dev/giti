@@ -7,6 +7,7 @@ use termion::cursor::DetectCursorPos;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use std::path::Path;
 
 struct File {
     path: String,
@@ -141,8 +142,7 @@ fn run_interface(mut files: Vec<File>, repo: Repository) -> Result<(), io::Error
 }
 
 fn commit_changes(files: Vec<File>, repo: Repository) {
-    let mut add = Command::new("git");
-    add.arg("add");
+    let mut index = repo.index().expect("Failed to get repo index");
 
     let mut remove = Command::new("git");
     remove.arg("restore").arg("--staged");
@@ -155,7 +155,7 @@ fn commit_changes(files: Vec<File>, repo: Repository) {
         if file.added != file.to_add {
             if file.to_add {
                 add_amount += 1;
-                add.arg(file.path);
+                index.add_path(Path::new(&file.path)).expect("Unable to add file");
             } else {
                 remove_amount += 1;
                 remove.arg(file.path);
@@ -163,8 +163,9 @@ fn commit_changes(files: Vec<File>, repo: Repository) {
         }
     }
 
+
     if add_amount > 0 {
-        add.output().expect("Failed to add files");
+        index.write().expect("");
     }
 
     if remove_amount > 0 {
