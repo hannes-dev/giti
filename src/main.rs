@@ -1,13 +1,13 @@
 use git2::Repository;
 use git2::StatusOptions;
 use std::io::{self, stdin, stdout, Write};
+use std::path::Path;
 use std::process::Command;
 use termion::color;
 use termion::cursor::DetectCursorPos;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use std::path::Path;
 
 struct File {
     path: String,
@@ -50,7 +50,8 @@ fn parse_status(repo: &Repository) -> Result<Vec<File>, String> {
         .map(|line| {
             let status = line.status();
             let path = line.path().unwrap();
-            let added = (status.is_index_modified() || status.is_index_new()) && !status.is_wt_modified();
+            let added =
+                (status.is_index_modified() || status.is_index_new()) && !status.is_wt_modified();
 
             // println!("{:?}", status);
 
@@ -155,14 +156,15 @@ fn commit_changes(files: Vec<File>, repo: Repository) {
         if file.added != file.to_add {
             if file.to_add {
                 add_amount += 1;
-                index.add_path(Path::new(&file.path)).expect("Unable to add file");
+                index
+                    .add_path(Path::new(&file.path))
+                    .expect("Unable to add file");
             } else {
                 remove_amount += 1;
                 remove.arg(file.path);
             }
         }
     }
-
 
     if add_amount > 0 {
         index.write().expect("");
