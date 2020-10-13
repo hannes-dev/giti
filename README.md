@@ -1,6 +1,6 @@
 # giti
 
-Quick multi-select staging of commits
+Quick multi-select staging of files
 
 Run `giti` in your git repo and it will give you a list of changed files for you to quickly stage or unstage.
 
