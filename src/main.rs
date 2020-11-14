@@ -81,6 +81,7 @@ fn print_status(files: &[File], selected: usize) {
         };
 
         // print line with file info. example of a selected and added file: ">[x] .gitignore<"
+        // Dit is een goede print - Felixiaan 2020
         println!(
             "{}{}[{}] {}{}{}\r",
             select_marks[0],
